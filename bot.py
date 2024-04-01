@@ -6,8 +6,9 @@ from dotenv import load_dotenv
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.select import Select
 from selenium.webdriver.chrome.service import Service
-from selenium.common.exceptions import NoSuchElementException
+from webdriver_manager.chrome import ChromeDriverManager
 from discord_webhook import DiscordWebhook, DiscordEmbed
+from selenium.common.exceptions import NoSuchElementException
 
 from mapeamentos.map_site import *
 
@@ -80,6 +81,16 @@ def extrair_dados_fpm(driver):
         pass
     pass
 
+def config_webdriver():
+    options = webdriver.ChromeOptions()
+    options.add_argument("--headless")
+    options.add_argument("--no-sandbox")
+    options.add_argument("--disable-dev-shm-usage")
+    service_chrome = Service(ChromeDriverManager().install())
+    driver = webdriver.Chrome(service=service_chrome, options=options)
+    # driver.set_window_size(800, 700)
+
+    return driver
 
 def extrair_dados_royalties(driver):
     city='TEFE'
@@ -142,12 +153,17 @@ while True:
     # Formatar a data (dd/MM/yyyy)
     today_formatted = today.strftime('%d/%m/%Y')
     
-    options = webdriver.ChromeOptions()
-    options.add_argument("--headless")
-    service_chrome = Service("C:\\chromedriver.exe")
-    driver = webdriver.Chrome(service=service_chrome, options=options)
+    # Procurar se recebeu FPM hoje
+    driver = config_webdriver()
     abrir_site(driver, 'https://www42.bb.com.br/portalbb/daf/beneficiario,802,4647,4652,0,1.bbx')
     extrair_dados_fpm(driver)
+    driver.quit()
+    
+    time.sleep(2)
+
+    # Procurar se recebeu Royalties hoje
+    driver = config_webdriver()
+    abrir_site(driver, 'https://www42.bb.com.br/portalbb/daf/beneficiario,802,4647,4652,0,1.bbx')
     extrair_dados_royalties(driver)
     driver.quit()
 
