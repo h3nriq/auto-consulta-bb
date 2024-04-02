@@ -6,7 +6,6 @@ from dotenv import load_dotenv
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.select import Select
 from selenium.webdriver.chrome.service import Service
-from webdriver_manager.chrome import ChromeDriverManager
 from discord_webhook import DiscordWebhook, DiscordEmbed
 from selenium.common.exceptions import NoSuchElementException
 
@@ -86,11 +85,9 @@ def config_webdriver():
     options.add_argument("--headless")
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
-    # service_chrome = Service(ChromeDriverManager().install())
     service_chrome = Service("/usr/local/bin/chromedriver")
     driver = webdriver.Chrome(service=service_chrome, options=options)
-    # driver.set_window_size(800, 700)
-
+    
     return driver
 
 def extrair_dados_royalties(driver):
@@ -139,6 +136,7 @@ def extrair_dados_royalties(driver):
 
     # SE NÃO TIVER PAGAMENTO PASSA
     if finded == 0:
+        print("Não tem Pagamento agora :(")
         pass
 
     # SE TIVER PAGAMENTO, ENVIA MENSAGEM PARA O DISCORD
