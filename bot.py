@@ -86,7 +86,8 @@ def config_webdriver():
     options.add_argument("--headless")
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
-    service_chrome = Service(ChromeDriverManager().install())
+    # service_chrome = Service(ChromeDriverManager().install())
+    service_chrome = Service("/usr/local/bin/chromedriver")
     driver = webdriver.Chrome(service=service_chrome, options=options)
     # driver.set_window_size(800, 700)
 

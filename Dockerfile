@@ -9,6 +9,14 @@ RUN apt-get update && apt-get install -y wget gnupg2 unzip \
 RUN wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
 RUN dpkg -i google-chrome-stable_current_amd64.deb; apt-get -fy install
 
+# Instala o ChromeDriver
+RUN CHROMEVER=$(google-chrome --version | grep -oE "[0-9.]{2,20}." | cut -d"." -f1-2) && \
+    wget -N https://chromedriver.storage.googleapis.com/$(curl -s https://chromedriver.storage.googleapis.com/LATEST_RELEASE_$CHROMEVER)/chromedriver_linux64.zip -P ~/ && \
+    unzip ~/chromedriver_linux64.zip -d ~/ && \
+    mv -f ~/chromedriver /usr/local/bin/chromedriver && \
+    chmod 0755 /usr/local/bin/chromedriver && \
+    rm ~/chromedriver_linux64.zip
+
 # Define o diretório de trabalho no contêiner
 WORKDIR /app
 
