@@ -13,7 +13,7 @@ RUN wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key
 
 # Instala uma versão específica do ChromeDriver
 RUN CHROMEDRIVER_VERSION=123.0.6312.86 && \
-    wget -N https://chromedriver.storage.googleapis.com/$CHROMEDRIVER_VERSION/chromedriver_linux64.zip -P ~/ && \
+    wget -N https://storage.googleapis.com/chrome-for-testing-public/$CHROMEDRIVER_VERSION/linux64/chrome-headless-shell-linux64.zip -P ~/ && \
     unzip ~/chromedriver_linux64.zip -d ~/ && \
     mv -f ~/chromedriver /usr/local/bin/chromedriver && \
     chmod 0755 /usr/local/bin/chromedriver && \
