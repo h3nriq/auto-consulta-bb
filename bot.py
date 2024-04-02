@@ -8,6 +8,7 @@ from selenium.webdriver.support.select import Select
 from selenium.webdriver.chrome.service import Service
 from discord_webhook import DiscordWebhook, DiscordEmbed
 from selenium.common.exceptions import NoSuchElementException
+from webdriver_manager.chrome import ChromeDriverManager
 
 from mapeamentos.map_site import *
 
@@ -85,7 +86,7 @@ def config_webdriver():
     options.add_argument("--headless")
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
-    service_chrome = Service("/usr/local/bin/chromedriver")
+    service_chrome = Service(ChromeDriverManager().install())
     driver = webdriver.Chrome(service=service_chrome, options=options)
     
     return driver
