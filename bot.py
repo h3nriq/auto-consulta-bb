@@ -15,71 +15,15 @@ from mapeamentos.map_site import *
 # Configurar env
 load_dotenv()
 discord_wh = os.getenv('WEBHOOK_DISCORD')
+notifications = {"FPM": None, "ROYALTIES": None}
+site_link= 'https://www42.bb.com.br/portalbb/daf/beneficiario,802,4647,4652,0,1.bbx'
 
-def send_discord():
+def send_discord(title, description, name):
     webhook = DiscordWebhook(url=discord_wh)
-    embed = DiscordEmbed(title='Dia de Pagamento', description='$$$$ FPM $$$$', color='03b2f8')
-    embed.set_author(name='Bot Municipal')
-
+    embed = DiscordEmbed(title=title, description=description, color='03b2f8')
+    embed.set_author(name=name)
     webhook.add_embed(embed)
-    webhook.execute(embed)
-
-def abrir_site(driver, url):
-    driver.get(url)
-
-def extrair_dados_fpm(driver):
-    city='TEFE'
-    uf='AM'
-    fundo='FPM - FUNDO DE PARTICIPACAO'
-    SITE_MAP = site_map()
-
-    # PROCURAE MUNICÍPIO
-    input_element = driver.find_element("xpath", SITE_MAP["inputs"]["busca_municipio"]["xpath"])
-    input_element.send_keys(city)
-
-    # CONTINUAE
-    driver.find_element("xpath", SITE_MAP["buttons"]["continuar"]["xpath"]).click()    
-    time.sleep(1)
-
-    # SELECIONAR MUNICÍPIO CORRETO
-    sel = Select(driver.find_element("id", "formulario:comboBeneficiario"))
-    sel.select_by_visible_text(city+ ' - '+uf)
-
-    # COLOCAR DATA DE HOJE PARA DATA INICIAL 
-    input_element = driver.find_element(By.XPATH, SITE_MAP["inputs"]["data_inicial"]["xpath"])
-    input_element.send_keys(today_formatted)
-
-    # COLOCAR DATA DE HOJE PARA DATA INICIAL 
-    input_element = driver.find_element(By.XPATH, SITE_MAP["inputs"]["data_final"]["xpath"])
-    input_element.send_keys(today_formatted)
-
-    # SELECIONA O FUNDO    
-    sel = Select(driver.find_element("id", "formulario:comboFundo"))
-    sel.select_by_visible_text(fundo)
-
-    # BUSCAR EXTRATO HOJE
-    driver.find_element(By.XPATH, SITE_MAP["buttons"]["continuar_page2"]["xpath"]).click()
-    time.sleep(2)
-
-    # TENTAR IDENTIFICAR PAGAMENTO
-    try:
-        # Tenta encontrar o elemento na página e extrair seu texto
-        driver.find_element(By.XPATH, SITE_MAP["span"]["credito_beneficiario"]["xpath"]).text
-        # Formata o texto extraído, mantendo apenas os números
-        finded = 1
-    except NoSuchElementException:
-        # Se o elemento não for encontrado, atribui 0 à variável
-        finded = 0
-
-    # SE NÃO TIVER PAGAMENTO PASSA
-    if finded == 0:
-        pass
-
-    # SE TIVER PAGAMENTO, ENVIA MENSAGEM PARA O DISCORD
-    else: 
-        send_discord()
-        pass
-    pass
+    webhook.execute()
 
 def config_webdriver():
     options = webdriver.ChromeOptions()
@@ -88,83 +32,45 @@ def config_webdriver():
     options.add_argument("--disable-dev-shm-usage")
     service_chrome = Service(ChromeDriverManager().install())
     driver = webdriver.Chrome(service=service_chrome, options=options)
-    
     return driver
 
-def extrair_dados_royalties(driver):
-    city='TEFE'
-    uf='AM'
-    fundo='ANP - ROYALTIES DA ANP'
+def open_site_and_configure_search(driver, city, uf, fundo, today_formatted):
     SITE_MAP = site_map()
-
-    # PROCURAE MUNICÍPIO
-    input_element = driver.find_element("xpath", SITE_MAP["inputs"]["busca_municipio"]["xpath"])
-    input_element.send_keys(city)
-
-    # CONTINUAE
+    driver.get(site_link)
+    driver.find_element("xpath", SITE_MAP["inputs"]["busca_municipio"]["xpath"]).send_keys(city)
     driver.find_element("xpath", SITE_MAP["buttons"]["continuar"]["xpath"]).click()    
     time.sleep(1)
-
-    # SELECIONAR MUNICÍPIO CORRETO
-    sel = Select(driver.find_element("id", "formulario:comboBeneficiario"))
-    sel.select_by_visible_text(city+ ' - '+uf)
-
-    # COLOCAR DATA DE HOJE PARA DATA INICIAL 
-    input_element = driver.find_element(By.XPATH, SITE_MAP["inputs"]["data_inicial"]["xpath"])
-    input_element.send_keys(today_formatted)
-
-    # COLOCAR DATA DE HOJE PARA DATA INICIAL 
-    input_element = driver.find_element(By.XPATH, SITE_MAP["inputs"]["data_final"]["xpath"])
-    input_element.send_keys(today_formatted)
-
-    # SELECIONA O FUNDO    
-    sel = Select(driver.find_element("id", "formulario:comboFundo"))
-    sel.select_by_visible_text(fundo)
-
-    # BUSCAR EXTRATO HOJE
+    Select(driver.find_element("id", "formulario:comboBeneficiario")).select_by_visible_text(f"{city} - {uf}")
+    driver.find_element(By.XPATH, SITE_MAP["inputs"]["data_inicial"]["xpath"]).send_keys(today_formatted)
+    driver.find_element(By.XPATH, SITE_MAP["inputs"]["data_final"]["xpath"]).send_keys(today_formatted)
+    Select(driver.find_element("id", "formulario:comboFundo")).select_by_visible_text(fundo)
     driver.find_element(By.XPATH, SITE_MAP["buttons"]["continuar_page2"]["xpath"]).click()
     time.sleep(2)
 
-    # TENTAR IDENTIFICAR PAGAMENTO
+def check_and_notify(driver, title, description, name):
     try:
-        # Tenta encontrar o elemento na página e extrair seu texto
-        driver.find_element(By.XPATH, SITE_MAP["span"]["credito_beneficiario"]["xpath"]).text
-        # Formata o texto extraído, mantendo apenas os números
-        finded = 1
+        driver.find_element(By.XPATH, site_map()["span"]["credito_beneficiario"]["xpath"]).text
+        send_discord(title, description, name)
+        return True
     except NoSuchElementException:
-        # Se o elemento não for encontrado, atribui 0 à variável
-        finded = 0
+        return False
 
-    # SE NÃO TIVER PAGAMENTO PASSA
-    if finded == 0:
-        print("Não tem Pagamento agora :(")
-        pass
-
-    # SE TIVER PAGAMENTO, ENVIA MENSAGEM PARA O DISCORD
-    else: 
-        send_discord()
-        pass
-    pass
-
+def check_notification(tipo, today_formatted):
+    if notifications[tipo] != today_formatted:
+        driver = config_webdriver()
+        if tipo == "FPM":
+            open_site_and_configure_search(driver, "TEFE", "AM", "FPM - FUNDO DE PARTICIPACAO", today_formatted)
+            if check_and_notify(driver, "Dia de Pagamento", "$$$$ FPM $$$$", "Bot Municipal"):
+                notifications[tipo] = today_formatted
+        elif tipo == "ROYALTIES":
+            open_site_and_configure_search(driver, "TEFE", "AM", "ANP - ROYALTIES DA ANP", today_formatted)
+            if check_and_notify(driver, "Dia de Pagamento", "Psiu, psiu, olha o royalties", "Bot ANP"):
+                notifications[tipo] = today_formatted
+        driver.quit()
+  
 while True:
-    # Obter a data atual
-    today = datetime.now()
-
-    # Formatar a data (dd/MM/yyyy)
-    today_formatted = today.strftime('%d/%m/%Y')
-    
-    # Procurar se recebeu FPM hoje
-    driver = config_webdriver()
-    abrir_site(driver, 'https://www42.bb.com.br/portalbb/daf/beneficiario,802,4647,4652,0,1.bbx')
-    extrair_dados_fpm(driver)
-    driver.quit()
-    
-    time.sleep(2)
-
-    # Procurar se recebeu Royalties hoje
-    driver = config_webdriver()
-    abrir_site(driver, 'https://www42.bb.com.br/portalbb/daf/beneficiario,802,4647,4652,0,1.bbx')
-    extrair_dados_royalties(driver)
-    driver.quit()
-
-    time.sleep(120)
+    today_formatted = datetime.now().strftime('%d/%m/%Y')
+    check_notification("FPM", today_formatted)
+    time.sleep(2)  
+    check_notification("ROYALTIES", today_formatted)
+    time.sleep(120)  # Espera 2 minutos antes da próxima iteração
