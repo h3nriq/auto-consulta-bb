@@ -1,6 +1,6 @@
 import os
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 from selenium import webdriver
 from dotenv import load_dotenv
 from selenium.webdriver.common.by import By
@@ -34,7 +34,7 @@ def config_webdriver():
     driver = webdriver.Chrome(service=service_chrome, options=options)
     return driver
 
-def open_site_and_configure_search(driver, city, uf, fundo, today_formatted):
+def open_site_and_configure_search(driver, city, uf, fundo, today_formatted, three_days_ahead):
     SITE_MAP = site_map()
     driver.get(site_link)
     driver.find_element("xpath", SITE_MAP["inputs"]["busca_municipio"]["xpath"]).send_keys(city)
@@ -42,7 +42,7 @@ def open_site_and_configure_search(driver, city, uf, fundo, today_formatted):
     time.sleep(1)
     Select(driver.find_element("id", "formulario:comboBeneficiario")).select_by_visible_text(f"{city} - {uf}")
     driver.find_element(By.XPATH, SITE_MAP["inputs"]["data_inicial"]["xpath"]).send_keys(today_formatted)
-    driver.find_element(By.XPATH, SITE_MAP["inputs"]["data_final"]["xpath"]).send_keys(today_formatted)
+    driver.find_element(By.XPATH, SITE_MAP["inputs"]["data_final"]["xpath"]).send_keys(three_days_ahead)
     Select(driver.find_element("id", "formulario:comboFundo")).select_by_visible_text(fundo)
     driver.find_element(By.XPATH, SITE_MAP["buttons"]["continuar_page2"]["xpath"]).click()
     time.sleep(2)
@@ -55,22 +55,23 @@ def check_and_notify(driver, title, description, name):
     except NoSuchElementException:
         return False
 
-def check_notification(tipo, today_formatted):
+def check_notification(tipo, today_formatted, three_days_ahead):
     if notifications[tipo] != today_formatted:
         driver = config_webdriver()
         if tipo == "FPM":
-            open_site_and_configure_search(driver, "TEFE", "AM", "FPM - FUNDO DE PARTICIPACAO", today_formatted)
+            open_site_and_configure_search(driver, "TEFE", "AM", "FPM - FUNDO DE PARTICIPACAO", today_formatted, three_days_ahead)
             if check_and_notify(driver, "Dia de Pagamento", "$$$$ FPM $$$$", "Bot Municipal"):
                 notifications[tipo] = today_formatted
         elif tipo == "ROYALTIES":
-            open_site_and_configure_search(driver, "TEFE", "AM", "ANP - ROYALTIES DA ANP", today_formatted)
+            open_site_and_configure_search(driver, "TEFE", "AM", "ANP - ROYALTIES DA ANP", today_formatted, three_days_ahead)
             if check_and_notify(driver, "Dia de Pagamento", "Psiu, psiu, olha o royalties", "Bot ANP"):
                 notifications[tipo] = today_formatted
         driver.quit()
   
 while True:
     today_formatted = datetime.now().strftime('%d/%m/%Y')
-    check_notification("FPM", today_formatted)
+    three_days_ahead = (datetime.now() + timedelta(days=3)).strftime('%d/%m/%Y')
+    check_notification("FPM", today_formatted, three_days_ahead)
     time.sleep(2)  
-    check_notification("ROYALTIES", today_formatted)
+    check_notification("ROYALTIES", today_formatted, three_days_ahead)
     time.sleep(120)  # Espera 2 minutos antes da próxima iteração
