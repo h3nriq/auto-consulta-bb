@@ -33,11 +33,11 @@ def send_discord(title, description, name):
 
 def config_webdriver():
     options = webdriver.ChromeOptions()
-    # options.add_argument("--headless")
-    # options.add_argument("--no-sandbox")
-    # options.add_argument("--disable-dev-shm-usage")
-    # options.add_argument("--disable-gpu")
-    # options.add_argument("--window-size=1920x1080")
+    options.add_argument("--headless")
+    options.add_argument("--no-sandbox")
+    options.add_argument("--disable-dev-shm-usage")
+    options.add_argument("--disable-gpu")
+    options.add_argument("--window-size=1920x1080")
     service_chrome = Service(ChromeDriverManager().install())
     driver = webdriver.Chrome(service=service_chrome, options=options)
     return driver
@@ -71,7 +71,9 @@ def open_site_and_configure_search(driver, city, uf, fundo, today_formatted, thr
 
 def check_and_notify(driver, title, description, name):
     try:
+        logging.info("Entrou na notificação")
         WebDriverWait(driver, 10).until(EC.visibility_of_element_located((By.XPATH, site_map()["span"]["credito_beneficiario"]["xpath"])))
+        logging.info("Achou payment")
         payment = driver.find_element(By.XPATH, site_map()["span"]["credito_beneficiario"]["xpath"]).text
         # send_discord(title, description, name)
         logging.info("ENVIOU NOTIFICAÇÃO")
