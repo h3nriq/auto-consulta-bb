@@ -60,6 +60,7 @@ def check_and_notify(driver, title, description, name):
         return False
 
 def check_notification(tipo, today_formatted, three_days_ahead):
+    logging.info(f"Verificando notificação para {tipo}: Notificado em {notifications[tipo]}, Hoje é {today_formatted}")
     if notifications[tipo] != today_formatted:
         driver = config_webdriver()
         if tipo == "FPM":
@@ -82,7 +83,7 @@ while True:
     logging.info(f"Procurando hoje: {today_formatted}")
     logging.info(f"Procurando +3 dias: {three_days_ahead}")
     check_notification("FPM", today_formatted, three_days_ahead)
-    time.sleep(2)  
+    time.sleep(5)  
     check_notification("ROYALTIES", today_formatted, three_days_ahead)
     logging.info("Aguardando 2 minutos")
     time.sleep(120)  # Espera 2 minutos antes da próxima iteração
