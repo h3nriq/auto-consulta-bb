@@ -33,11 +33,11 @@ def send_discord(title, description, name):
 
 def config_webdriver():
     options = webdriver.ChromeOptions()
-    options.add_argument("--headless")
-    options.add_argument("--no-sandbox")
-    options.add_argument("--disable-dev-shm-usage")
-    options.add_argument("--disable-gpu")
-    options.add_argument("--window-size=1920x1080")
+    # options.add_argument("--headless")
+    # options.add_argument("--no-sandbox")
+    # options.add_argument("--disable-dev-shm-usage")
+    # options.add_argument("--disable-gpu")
+    # options.add_argument("--window-size=1920x1080")
     service_chrome = Service(ChromeDriverManager().install())
     driver = webdriver.Chrome(service=service_chrome, options=options)
     return driver
@@ -66,14 +66,15 @@ def open_site_and_configure_search(driver, city, uf, fundo, today_formatted, thr
         logging.info("Continuou para a página de credito")
     except Exception as e:
         logging.error(f"Erro ao procurar elemento na página, no tipo {fundo}: {e}")
-        if 'driver' in locals():  # Verifica se o 'driver' foi criado
-            driver.quit()
+        # if 'driver' in locals():  # Verifica se o 'driver' foi criado
+        driver.quit()
 
 def check_and_notify(driver, title, description, name):
     try:
         WebDriverWait(driver, 10).until(EC.visibility_of_element_located((By.XPATH, site_map()["span"]["credito_beneficiario"]["xpath"])))
         payment = driver.find_element(By.XPATH, site_map()["span"]["credito_beneficiario"]["xpath"]).text
-        send_discord(title, description, name)
+        # send_discord(title, description, name)
+        logging.info("ENVIOU NOTIFICAÇÃO")
         logging.info(f"Valor de {name}: R$ {payment}")
         driver.quit()
         return True
@@ -105,7 +106,8 @@ def check_notification(tipo, today_formatted, three_days_ahead):
             driver.quit()
 
 while True:
-    today_formatted = datetime.now().strftime('%d/%m/%Y')
+    # today_formatted = datetime.now().strftime('%d/%m/%Y')
+    today_formatted = "29/04/2024"
     three_days_ahead = (datetime.now() + timedelta(days=3)).strftime('%d/%m/%Y')
     logging.info(f"Procurando hoje: {today_formatted}")
     logging.info(f"Procurando +3 dias: {three_days_ahead}")
