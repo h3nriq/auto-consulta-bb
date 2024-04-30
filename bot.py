@@ -101,7 +101,7 @@ while True:
     three_days_ahead = (datetime.now() + timedelta(days=3)).strftime('%d/%m/%Y')
     logging.info(f"Procurando hoje: {today_formatted}")
     logging.info(f"Procurando +3 dias: {three_days_ahead}")
-    check_notification("FPM", today_formatted, three_days_ahead)
+    # check_notification("FPM", today_formatted, three_days_ahead)
     time.sleep(5)  
     check_notification("ROYALTIES", today_formatted, three_days_ahead)
     logging.info("Aguardando 2 minutos")
