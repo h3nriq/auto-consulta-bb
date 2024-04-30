@@ -39,7 +39,7 @@ def open_site_and_configure_search(driver, city, uf, fundo, today_formatted, thr
     driver.get(site_link)
     driver.find_element("xpath", SITE_MAP["inputs"]["busca_municipio"]["xpath"]).send_keys(city)
     driver.find_element("xpath", SITE_MAP["buttons"]["continuar"]["xpath"]).click()    
-    time.sleep(1)
+    time.sleep(2)
     Select(driver.find_element("id", "formulario:comboBeneficiario")).select_by_visible_text(f"{city} - {uf}")
     driver.find_element(By.XPATH, SITE_MAP["inputs"]["data_inicial"]["xpath"]).send_keys(today_formatted)
     driver.find_element(By.XPATH, SITE_MAP["inputs"]["data_final"]["xpath"]).send_keys(three_days_ahead)
