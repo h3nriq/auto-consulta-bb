@@ -66,7 +66,6 @@ def open_site_and_configure_search(driver, city, uf, fundo, today_formatted, thr
         logging.info("Continuou para a página de credito")
     except Exception as e:
         logging.error(f"Erro ao procurar elemento na página, no tipo {fundo}: {e}")
-        # if 'driver' in locals():  # Verifica se o 'driver' foi criado
         driver.quit()
 
 def check_and_notify(driver, title, description, name):
@@ -75,8 +74,8 @@ def check_and_notify(driver, title, description, name):
         WebDriverWait(driver, 10).until(EC.visibility_of_element_located((By.XPATH, site_map()["span"]["credito_beneficiario"]["xpath"])))
         logging.info("Achou payment")
         payment = driver.find_element(By.XPATH, site_map()["span"]["credito_beneficiario"]["xpath"]).text
-        # send_discord(title, description, name)
-        logging.info("ENVIOU NOTIFICAÇÃO")
+        send_discord(title, description, name)
+        logging.info("ENVIOU NOTIFICAÇÃO DISCORD")
         logging.info(f"Valor de {name}: R$ {payment}")
         driver.quit()
         return True
@@ -104,8 +103,7 @@ def check_notification(tipo, today_formatted, three_days_ahead):
             logging.info(f"Já notificou hoje: {notifications[tipo]}")
     except Exception as e:
         logging.error(f"Erro ao verificar notificação para {tipo}: {e}")
-        if 'driver' in locals():  # Verifica se o 'driver' foi criado
-            driver.quit()
+        driver.quit()
 
 while True:
     # today_formatted = datetime.now().strftime('%d/%m/%Y')
