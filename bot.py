@@ -44,18 +44,26 @@ def config_webdriver():
 
 def open_site_and_configure_search(driver, city, uf, fundo, today_formatted, three_days_ahead):
     try:
+        logging.info("Comecar a procura")
         SITE_MAP = site_map()
         driver.get(site_link)
+        logging.info("Abriu o link")
         WebDriverWait(driver, 10).until(EC.visibility_of_element_located((By.XPATH, SITE_MAP["inputs"]["busca_municipio"]["xpath"])))
+        logging.info("Esperou carregar a página inicial")
         driver.find_element(By.XPATH, SITE_MAP["inputs"]["busca_municipio"]["xpath"]).send_keys(city)
         driver.find_element(By.XPATH, SITE_MAP["buttons"]["continuar"]["xpath"]).click()
+        logging.info("Entrou na próxima página")
         WebDriverWait(driver, 10).until(EC.visibility_of_element_located((By.ID, "formulario:comboBeneficiario")))
         Select(driver.find_element(By.ID, "formulario:comboBeneficiario")).select_by_visible_text(f"{city} - {uf}")
+        logging.info("Selecionou o município")
         driver.find_element(By.XPATH, SITE_MAP["inputs"]["data_inicial"]["xpath"]).send_keys(today_formatted)
         driver.find_element(By.XPATH, SITE_MAP["inputs"]["data_final"]["xpath"]).send_keys(three_days_ahead)
+        logging.info("Selecionou as datas")
         Select(driver.find_element(By.ID, "formulario:comboFundo")).select_by_visible_text(fundo)
+        logging.info("Selecionou o fundo")
         WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, SITE_MAP["buttons"]["continuar_page2"]["xpath"])))
         driver.find_element(By.XPATH, SITE_MAP["buttons"]["continuar_page2"]["xpath"]).click()
+        logging.info("Continuou para a página de credito")
     except Exception as e:
         logging.error(f"Erro ao procurar elemento na página, no tipo {fundo}: {e}")
         if 'driver' in locals():  # Verifica se o 'driver' foi criado
