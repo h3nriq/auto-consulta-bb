@@ -39,22 +39,29 @@ def config_webdriver():
     return driver
 
 def open_site_and_configure_search(driver, city, uf, fundo, today_formatted, three_days_ahead):
-    SITE_MAP = site_map()
-    driver.get(site_link)
-    driver.find_element("xpath", SITE_MAP["inputs"]["busca_municipio"]["xpath"]).send_keys(city)
-    driver.find_element("xpath", SITE_MAP["buttons"]["continuar"]["xpath"]).click()    
-    time.sleep(2)
-    Select(driver.find_element("id", "formulario:comboBeneficiario")).select_by_visible_text(f"{city} - {uf}")
-    driver.find_element(By.XPATH, SITE_MAP["inputs"]["data_inicial"]["xpath"]).send_keys(today_formatted)
-    driver.find_element(By.XPATH, SITE_MAP["inputs"]["data_final"]["xpath"]).send_keys(three_days_ahead)
-    Select(driver.find_element("id", "formulario:comboFundo")).select_by_visible_text(fundo)
-    driver.find_element(By.XPATH, SITE_MAP["buttons"]["continuar_page2"]["xpath"]).click()
-    time.sleep(2)
+    try:
+        SITE_MAP = site_map()
+        driver.get(site_link)
+        driver.find_element("xpath", SITE_MAP["inputs"]["busca_municipio"]["xpath"]).send_keys(city)
+        driver.find_element("xpath", SITE_MAP["buttons"]["continuar"]["xpath"]).click()    
+        time.sleep(2)
+        Select(driver.find_element("id", "formulario:comboBeneficiario")).select_by_visible_text(f"{city} - {uf}")
+        driver.find_element(By.XPATH, SITE_MAP["inputs"]["data_inicial"]["xpath"]).send_keys(today_formatted)
+        driver.find_element(By.XPATH, SITE_MAP["inputs"]["data_final"]["xpath"]).send_keys(three_days_ahead)
+        Select(driver.find_element("id", "formulario:comboFundo")).select_by_visible_text(fundo)
+        driver.find_element(By.XPATH, SITE_MAP["buttons"]["continuar_page2"]["xpath"]).click()
+        time.sleep(2)
+    except Exception as e:
+        logging.error(f"Erro procurar elemento na página, no tipo {fundo}: {e}")
+        if 'driver' in locals():  # Verifica se o 'driver' foi criado
+            driver.quit()
 
 def check_and_notify(driver, title, description, name):
     try:
-        driver.find_element(By.XPATH, site_map()["span"]["credito_beneficiario"]["xpath"]).text
+        payment = driver.find_element(By.XPATH, site_map()["span"]["credito_beneficiario"]["xpath"]).text
         send_discord(title, description, name)
+        logging.info(f"Valor de {name}: R$ {payment}")
+        driver.quit()
         return True
     except NoSuchElementException:
         return False
@@ -65,16 +72,17 @@ def check_notification(tipo, today_formatted, three_days_ahead):
         if notifications[tipo] != today_formatted:
             driver = config_webdriver()
             if tipo == "FPM":
+                logging.info("Procurando FPM")
                 open_site_and_configure_search(driver, "TEFE", "AM", "FPM - FUNDO DE PARTICIPACAO", today_formatted, three_days_ahead)
                 if check_and_notify(driver, "Dia de Pagamento", "$$$$ FPM $$$$", "Bot Municipal"):
                     notifications[tipo] = today_formatted
                     logging.info("Notificou FPM")
             elif tipo == "ROYALTIES":
+                logging.info("Procurando ROYALTIES")
                 open_site_and_configure_search(driver, "TEFE", "AM", "ANP - ROYALTIES DA ANP", today_formatted, three_days_ahead)
                 if check_and_notify(driver, "Dia de Pagamento", "Psiu, psiu, olha o royalties", "Bot ANP"):
                     notifications[tipo] = today_formatted
                     logging.info("Notificou Royalties")
-            driver.quit()
         else:
             logging.info(f"Já notificou hoje: {notifications[tipo]}")
     except Exception as e:
