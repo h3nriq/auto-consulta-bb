@@ -1,5 +1,6 @@
 import os
 import time
+import logging
 from datetime import datetime, timedelta
 from selenium import webdriver
 from dotenv import load_dotenv
@@ -17,6 +18,9 @@ load_dotenv()
 discord_wh = os.getenv('WEBHOOK_DISCORD')
 notifications = {"FPM": None, "ROYALTIES": None}
 site_link= 'https://www42.bb.com.br/portalbb/daf/beneficiario,802,4647,4652,0,1.bbx'
+
+# Configurar logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 def send_discord(title, description, name):
     webhook = DiscordWebhook(url=discord_wh)
@@ -62,16 +66,23 @@ def check_notification(tipo, today_formatted, three_days_ahead):
             open_site_and_configure_search(driver, "TEFE", "AM", "FPM - FUNDO DE PARTICIPACAO", today_formatted, three_days_ahead)
             if check_and_notify(driver, "Dia de Pagamento", "$$$$ FPM $$$$", "Bot Municipal"):
                 notifications[tipo] = today_formatted
+                logging.info("Notificou FPM")
         elif tipo == "ROYALTIES":
             open_site_and_configure_search(driver, "TEFE", "AM", "ANP - ROYALTIES DA ANP", today_formatted, three_days_ahead)
             if check_and_notify(driver, "Dia de Pagamento", "Psiu, psiu, olha o royalties", "Bot ANP"):
                 notifications[tipo] = today_formatted
+                logging.info("Notificou Royalties")
         driver.quit()
+    else:
+        logging.info(f"Já notificou hoje: {notifications[tipo]}")
   
 while True:
     today_formatted = datetime.now().strftime('%d/%m/%Y')
     three_days_ahead = (datetime.now() + timedelta(days=3)).strftime('%d/%m/%Y')
+    logging.info(f"Procurando hoje: {today_formatted}")
+    logging.info(f"Procurando +3 dias: {three_days_ahead}")
     check_notification("FPM", today_formatted, three_days_ahead)
     time.sleep(2)  
     check_notification("ROYALTIES", today_formatted, three_days_ahead)
+    logging.info("Aguardando 2 minutos")
     time.sleep(120)  # Espera 2 minutos antes da próxima iteração
