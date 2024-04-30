@@ -60,23 +60,28 @@ def check_and_notify(driver, title, description, name):
         return False
 
 def check_notification(tipo, today_formatted, three_days_ahead):
-    logging.info(f"Verificando notificação para {tipo}: Notificado em {notifications[tipo]}, Hoje é {today_formatted}")
-    if notifications[tipo] != today_formatted:
-        driver = config_webdriver()
-        if tipo == "FPM":
-            open_site_and_configure_search(driver, "TEFE", "AM", "FPM - FUNDO DE PARTICIPACAO", today_formatted, three_days_ahead)
-            if check_and_notify(driver, "Dia de Pagamento", "$$$$ FPM $$$$", "Bot Municipal"):
-                notifications[tipo] = today_formatted
-                logging.info("Notificou FPM")
-        elif tipo == "ROYALTIES":
-            open_site_and_configure_search(driver, "TEFE", "AM", "ANP - ROYALTIES DA ANP", today_formatted, three_days_ahead)
-            if check_and_notify(driver, "Dia de Pagamento", "Psiu, psiu, olha o royalties", "Bot ANP"):
-                notifications[tipo] = today_formatted
-                logging.info("Notificou Royalties")
-        driver.quit()
-    else:
-        logging.info(f"Já notificou hoje: {notifications[tipo]}")
-  
+    try:
+        logging.info(f"Verificando notificação para {tipo}: Notificado em {notifications[tipo]}, Hoje é {today_formatted}")
+        if notifications[tipo] != today_formatted:
+            driver = config_webdriver()
+            if tipo == "FPM":
+                open_site_and_configure_search(driver, "TEFE", "AM", "FPM - FUNDO DE PARTICIPACAO", today_formatted, three_days_ahead)
+                if check_and_notify(driver, "Dia de Pagamento", "$$$$ FPM $$$$", "Bot Municipal"):
+                    notifications[tipo] = today_formatted
+                    logging.info("Notificou FPM")
+            elif tipo == "ROYALTIES":
+                open_site_and_configure_search(driver, "TEFE", "AM", "ANP - ROYALTIES DA ANP", today_formatted, three_days_ahead)
+                if check_and_notify(driver, "Dia de Pagamento", "Psiu, psiu, olha o royalties", "Bot ANP"):
+                    notifications[tipo] = today_formatted
+                    logging.info("Notificou Royalties")
+            driver.quit()
+        else:
+            logging.info(f"Já notificou hoje: {notifications[tipo]}")
+    except Exception as e:
+        logging.error(f"Erro ao verificar notificação para {tipo}: {e}")
+        if 'driver' in locals():  # Verifica se o 'driver' foi criado
+            driver.quit()
+
 while True:
     today_formatted = datetime.now().strftime('%d/%m/%Y')
     three_days_ahead = (datetime.now() + timedelta(days=3)).strftime('%d/%m/%Y')
