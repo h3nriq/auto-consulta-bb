@@ -5,6 +5,8 @@ from datetime import datetime, timedelta
 from selenium import webdriver
 from dotenv import load_dotenv
 from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.select import Select
 from selenium.webdriver.chrome.service import Service
 from discord_webhook import DiscordWebhook, DiscordEmbed
@@ -34,6 +36,8 @@ def config_webdriver():
     options.add_argument("--headless")
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
+    options.add_argument("--disable-gpu")
+    options.add_argument("--window-size=1920x1080")
     service_chrome = Service(ChromeDriverManager().install())
     driver = webdriver.Chrome(service=service_chrome, options=options)
     return driver
@@ -42,22 +46,24 @@ def open_site_and_configure_search(driver, city, uf, fundo, today_formatted, thr
     try:
         SITE_MAP = site_map()
         driver.get(site_link)
-        driver.find_element("xpath", SITE_MAP["inputs"]["busca_municipio"]["xpath"]).send_keys(city)
-        driver.find_element("xpath", SITE_MAP["buttons"]["continuar"]["xpath"]).click()    
-        time.sleep(2)
-        Select(driver.find_element("id", "formulario:comboBeneficiario")).select_by_visible_text(f"{city} - {uf}")
+        WebDriverWait(driver, 10).until(EC.visibility_of_element_located((By.XPATH, SITE_MAP["inputs"]["busca_municipio"]["xpath"])))
+        driver.find_element(By.XPATH, SITE_MAP["inputs"]["busca_municipio"]["xpath"]).send_keys(city)
+        driver.find_element(By.XPATH, SITE_MAP["buttons"]["continuar"]["xpath"]).click()
+        WebDriverWait(driver, 10).until(EC.visibility_of_element_located((By.ID, "formulario:comboBeneficiario")))
+        Select(driver.find_element(By.ID, "formulario:comboBeneficiario")).select_by_visible_text(f"{city} - {uf}")
         driver.find_element(By.XPATH, SITE_MAP["inputs"]["data_inicial"]["xpath"]).send_keys(today_formatted)
         driver.find_element(By.XPATH, SITE_MAP["inputs"]["data_final"]["xpath"]).send_keys(three_days_ahead)
-        Select(driver.find_element("id", "formulario:comboFundo")).select_by_visible_text(fundo)
+        Select(driver.find_element(By.ID, "formulario:comboFundo")).select_by_visible_text(fundo)
+        WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, SITE_MAP["buttons"]["continuar_page2"]["xpath"])))
         driver.find_element(By.XPATH, SITE_MAP["buttons"]["continuar_page2"]["xpath"]).click()
-        time.sleep(2)
     except Exception as e:
-        logging.error(f"Erro procurar elemento na página, no tipo {fundo}: {e}")
+        logging.error(f"Erro ao procurar elemento na página, no tipo {fundo}: {e}")
         if 'driver' in locals():  # Verifica se o 'driver' foi criado
             driver.quit()
 
 def check_and_notify(driver, title, description, name):
     try:
+        WebDriverWait(driver, 10).until(EC.visibility_of_element_located((By.XPATH, site_map()["span"]["credito_beneficiario"]["xpath"])))
         payment = driver.find_element(By.XPATH, site_map()["span"]["credito_beneficiario"]["xpath"]).text
         send_discord(title, description, name)
         logging.info(f"Valor de {name}: R$ {payment}")
