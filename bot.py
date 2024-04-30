@@ -106,8 +106,7 @@ def check_notification(tipo, today_formatted, three_days_ahead):
         driver.quit()
 
 while True:
-    # today_formatted = datetime.now().strftime('%d/%m/%Y')
-    today_formatted = "29/04/2024"
+    today_formatted = datetime.now().strftime('%d/%m/%Y')
     three_days_ahead = (datetime.now() + timedelta(days=3)).strftime('%d/%m/%Y')
     logging.info(f"Procurando hoje: {today_formatted}")
     logging.info(f"Procurando +3 dias: {three_days_ahead}")
