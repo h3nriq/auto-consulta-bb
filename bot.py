@@ -20,6 +20,8 @@ load_dotenv()
 discord_wh = os.getenv('WEBHOOK_DISCORD')
 notifications = {"FPM": None, "ROYALTIES": None}
 site_link= 'https://www42.bb.com.br/portalbb/daf/beneficiario,802,4647,4652,0,1.bbx'
+city = 'MANACAPURU'
+states = 'AM'
 
 # Configurar logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -89,13 +91,13 @@ def check_notification(tipo, today_formatted, three_days_ahead):
             driver = config_webdriver()
             if tipo == "FPM":
                 logging.info("Procurando FPM")
-                open_site_and_configure_search(driver, "TEFE", "AM", "FPM - FUNDO DE PARTICIPACAO", today_formatted, three_days_ahead)
+                open_site_and_configure_search(driver, city, states, "FPM - FUNDO DE PARTICIPACAO", today_formatted, three_days_ahead)
                 if check_and_notify(driver, "Dia de Pagamento", "$$$$ FPM $$$$", "Bot Municipal"):
                     notifications[tipo] = today_formatted
                     logging.info("Notificou FPM")
             elif tipo == "ROYALTIES":
                 logging.info("Procurando ROYALTIES")
-                open_site_and_configure_search(driver, "TEFE", "AM", "ANP - ROYALTIES DA ANP", today_formatted, three_days_ahead)
+                open_site_and_configure_search(driver, city, states, "ANP - ROYALTIES DA ANP", today_formatted, three_days_ahead)
                 if check_and_notify(driver, "Dia de Pagamento", "Psiu, psiu, olha o royalties", "Bot ANP"):
                     notifications[tipo] = today_formatted
                     logging.info("Notificou Royalties")
