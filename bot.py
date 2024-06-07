@@ -1,9 +1,10 @@
 import os
 import time
 import logging
-from datetime import datetime, timedelta
-from selenium import webdriver
 from dotenv import load_dotenv
+from selenium import webdriver
+from mapeamentos.map_site import *
+from datetime import datetime, timedelta
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -13,7 +14,6 @@ from discord_webhook import DiscordWebhook, DiscordEmbed
 from selenium.common.exceptions import NoSuchElementException
 from webdriver_manager.chrome import ChromeDriverManager
 
-from mapeamentos.map_site import *
 
 # Configurar env
 load_dotenv()
