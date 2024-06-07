@@ -35,10 +35,10 @@ def send_discord(title, description, name):
 
 def config_webdriver():
     options = webdriver.ChromeOptions()
-    # options.add_argument("--headless")
-    # options.add_argument("--no-sandbox")
-    # options.add_argument("--disable-dev-shm-usage")
-    # options.add_argument("--disable-gpu")
+    options.add_argument("--headless")
+    options.add_argument("--no-sandbox")
+    options.add_argument("--disable-dev-shm-usage")
+    options.add_argument("--disable-gpu")
     options.add_argument("--window-size=1920x1080")
     service_chrome = Service(ChromeDriverManager().install())
     driver = webdriver.Chrome(service=service_chrome, options=options)
@@ -98,13 +98,13 @@ def check_notification(tipo, today_formatted, three_days_ahead):
             if tipo == "FPM":
                 logging.info("Procurando FPM")
                 open_site_and_configure_search(driver, city, states, "FPM - FUNDO DE PARTICIPACAO", today_formatted, three_days_ahead)
-                if check_and_notify(driver, "TESTE FPM", "Teste FPM", "Bot Municipal"):
+                if check_and_notify(driver, "Dia de Pagamento", "$$$$ FPM $$$$", "Bot Municipal"):
                     notifications[tipo] = today_formatted
                     logging.info("Notificou FPM")
             elif tipo == "ROYALTIES":
                 logging.info("Procurando ROYALTIES")
                 open_site_and_configure_search(driver, city, states, "ANP - ROYALTIES DA ANP", today_formatted, three_days_ahead)
-                if check_and_notify(driver, "Teste RP", "Teste RP", "Bot ANP"):
+                if check_and_notify(driver, "Dia de Pagamento", "Psiu, psiu, olha o royalties", "Bot ANP"):
                     notifications[tipo] = today_formatted
                     logging.info("Notificou Royalties")
         else:
