@@ -19,7 +19,7 @@ from webdriver_manager.chrome import ChromeDriverManager
 load_dotenv()
 discord_wh = os.getenv('WEBHOOK_DISCORD')
 notifications = {"FPM": None, "ROYALTIES": None}
-site_link= 'https://www42.bb.com.br/portalbb/daf/beneficiario,802,4647,4652,0,1.bbx'
+site_link= 'https://demonstrativos.apps.bb.com.br/arrecadacao-federal'
 city = 'MANACAPURU'
 states = 'AM'
 
@@ -39,48 +39,67 @@ def config_webdriver():
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
     options.add_argument("--disable-gpu")
+    options.add_argument('--ignore-certificate-errors')
+    options.add_argument('--allow-running-insecure-content')
     options.add_argument("--window-size=1920x1080")
     service_chrome = Service(ChromeDriverManager().install())
     driver = webdriver.Chrome(service=service_chrome, options=options)
     return driver
 
 def open_site_and_configure_search(driver, city, uf, fundo, today_formatted, three_days_ahead):
-    try:
-        logging.info("Comecar a procura")
-        SITE_MAP = site_map()
-        driver.get(site_link)
-        logging.info("Abriu o link")
-        WebDriverWait(driver, 10).until(EC.visibility_of_element_located((By.XPATH, SITE_MAP["inputs"]["busca_municipio"]["xpath"])))
-        logging.info("Esperou carregar a página inicial")
-        driver.find_element(By.XPATH, SITE_MAP["inputs"]["busca_municipio"]["xpath"]).send_keys(city)
-        driver.find_element(By.XPATH, SITE_MAP["buttons"]["continuar"]["xpath"]).click()
-        logging.info("Entrou na próxima página")
-        WebDriverWait(driver, 10).until(EC.visibility_of_element_located((By.ID, "formulario:comboBeneficiario")))
-        Select(driver.find_element(By.ID, "formulario:comboBeneficiario")).select_by_visible_text(f"{city} - {uf}")
-        logging.info("Selecionou o município")
-        driver.find_element(By.XPATH, SITE_MAP["inputs"]["data_inicial"]["xpath"]).send_keys(today_formatted)
-        driver.find_element(By.XPATH, SITE_MAP["inputs"]["data_final"]["xpath"]).send_keys(three_days_ahead)
-        logging.info("Selecionou as datas")
-        Select(driver.find_element(By.ID, "formulario:comboFundo")).select_by_visible_text(fundo)
-        logging.info("Selecionou o fundo")
-        WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, SITE_MAP["buttons"]["continuar_page2"]["xpath"])))
-        driver.find_element(By.XPATH, SITE_MAP["buttons"]["continuar_page2"]["xpath"]).click()
-        logging.info("Continuou para a página de credito")
-    except Exception as e:
-        logging.error(f"Erro ao procurar elemento na página, no tipo {fundo}: {e}")
-        driver.quit()
+    wait = WebDriverWait(driver, 10)
+
+    logging.info("Comecar a procura")
+    SITE_MAP = site_map()
+    driver.get(site_link)
+    logging.info("Abriu o link")
+    WebDriverWait(driver, 10).until(EC.visibility_of_element_located((By.XPATH, SITE_MAP["inputs"]["busca_municipio"]["xpath"])))
+    logging.info("Esperou carregar a página inicial")
+    driver.find_element(By.XPATH, SITE_MAP["inputs"]["busca_municipio"]["xpath"]).send_keys(city)
+    driver.find_element(By.XPATH, SITE_MAP["buttons"]["continuar"]["xpath"]).click()
+    logging.info("Entrou na próxima página")
+    element = wait.until(EC.element_to_be_clickable((By.XPATH, SITE_MAP["class"]["overlay_municipio"]["xpath"])))
+    element.click()
+    element = wait.until(EC.element_to_be_clickable((By.XPATH, f"//a[.//span[contains(@class, 'menu-title') and contains(text(), ' {city} - {uf} ')]]")))
+    element.click()
+    logging.info("Selecionou o município")
+    driver.find_element(By.XPATH, SITE_MAP["inputs"]["data_inicial"]["xpath"]).send_keys(today_formatted)
+    driver.find_element(By.XPATH, SITE_MAP["inputs"]["data_final"]["xpath"]).send_keys(three_days_ahead)
+    logging.info("Selecionou as datas")
+    element = wait.until(EC.element_to_be_clickable((By.XPATH, SITE_MAP["class"]["overlay_fundo"]["xpath"])))
+    element.click()
+    element = wait.until(EC.element_to_be_clickable((By.XPATH, f"//a[.//span[contains(@class, 'menu-title') and contains(text(), ' {fundo} ')]]")))
+    element.click()
+    logging.info("Selecionou o fundo")
+    driver.find_element(By.XPATH, SITE_MAP["buttons"]["continuar_page2"]["xpath"]).click()
+    logging.info("Continuou para a página de credito")
 
 def check_and_notify(driver, title, description, name):
     try:
         logging.info("Entrou na notificação")
-        WebDriverWait(driver, 10).until(EC.visibility_of_element_located((By.XPATH, site_map()["span"]["credito_beneficiario"]["xpath"])))
+
+        # Esperar até que a tabela esteja visível
+        WebDriverWait(driver, 10).until(
+            EC.visibility_of_element_located((By.CSS_SELECTOR, "table.bb-table"))
+        )
         logging.info("Achou payment")
-        payment = driver.find_element(By.XPATH, site_map()["span"]["credito_beneficiario"]["xpath"]).text
-        send_discord(title, description, name)
-        logging.info("ENVIOU NOTIFICAÇÃO DISCORD")
-        logging.info(f"Valor de {name}: R$ {payment}")
-        driver.quit()
-        return True
+
+        # Localizar todos os elementos <td> que correspondam ao critério
+        valores = driver.find_elements(By.CSS_SELECTOR, "td.bb-cell.bb-cell-align-right[style='color: rgb(0, 0, 255);']")
+        
+        # Pegar o último valor da lista
+        ultimo_valor = valores[-1].text if valores else "Nenhum valor encontrado"
+        
+        if ultimo_valor == "0,00C":
+            logging.info("Não teve pagamento pra essa data")
+            return False
+        else: 
+            send_discord(title, description, name)
+            logging.info("ENVIOU NOTIFICAÇÃO DISCORD")
+            logging.info(f"Valor de {name}: R$ {ultimo_valor}")
+            time.sleep(10000)
+            return True
+
     except NoSuchElementException:
         return False
     except TimeoutException:
@@ -89,6 +108,8 @@ def check_and_notify(driver, title, description, name):
     except Exception as e:
         logging.info(f"Ocorreu um erro generico: {e}")
         return False
+    finally:
+        driver.quit()
 
 def check_notification(tipo, today_formatted, three_days_ahead):
     try:
