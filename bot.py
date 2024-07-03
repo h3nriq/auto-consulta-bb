@@ -35,12 +35,12 @@ def send_discord(title, description, name):
 
 def config_webdriver():
     options = webdriver.ChromeOptions()
-    # options.add_argument("--headless")
-    # options.add_argument("--no-sandbox")
-    # options.add_argument("--disable-dev-shm-usage")
-    # options.add_argument("--disable-gpu")
-    # options.add_argument('--ignore-certificate-errors')
-    # options.add_argument('--allow-running-insecure-content')
+    options.add_argument("--headless")
+    options.add_argument("--no-sandbox")
+    options.add_argument("--disable-dev-shm-usage")
+    options.add_argument("--disable-gpu")
+    options.add_argument('--ignore-certificate-errors')
+    options.add_argument('--allow-running-insecure-content')
     options.add_argument("--window-size=1920x1080")
     service_chrome = Service(ChromeDriverManager().install())
     driver = webdriver.Chrome(service=service_chrome, options=options)
@@ -97,7 +97,6 @@ def check_and_notify(driver, title, description, name):
             send_discord(title, description, name)
             logging.info("ENVIOU NOTIFICAÇÃO DISCORD")
             logging.info(f"Valor de {name}: R$ {ultimo_valor}")
-            time.sleep(10000)
             return True
 
     except NoSuchElementException:
