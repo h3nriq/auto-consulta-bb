@@ -35,12 +35,12 @@ def send_discord(title, description, name):
 
 def config_webdriver():
     options = webdriver.ChromeOptions()
-    options.add_argument("--headless")
-    options.add_argument("--no-sandbox")
-    options.add_argument("--disable-dev-shm-usage")
-    options.add_argument("--disable-gpu")
-    options.add_argument('--ignore-certificate-errors')
-    options.add_argument('--allow-running-insecure-content')
+    # options.add_argument("--headless")
+    # options.add_argument("--no-sandbox")
+    # options.add_argument("--disable-dev-shm-usage")
+    # options.add_argument("--disable-gpu")
+    # options.add_argument('--ignore-certificate-errors')
+    # options.add_argument('--allow-running-insecure-content')
     options.add_argument("--window-size=1920x1080")
     service_chrome = Service(ChromeDriverManager().install())
     driver = webdriver.Chrome(service=service_chrome, options=options)
@@ -89,8 +89,8 @@ def check_and_notify(driver, title, description, name):
         
         # Pegar o último valor da lista
         ultimo_valor = valores[-1].text if valores else "Nenhum valor encontrado"
-        
-        if ultimo_valor == "0,00C":
+   
+        if ultimo_valor == "0,00C" or ultimo_valor == "Nenhum valor encontrado":
             logging.info("Não teve pagamento pra essa data")
             return False
         else: 
