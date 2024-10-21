@@ -5,10 +5,14 @@ from datetime import datetime, timedelta
 from discord_webhook import DiscordWebhook, DiscordEmbed
 import os
 from dotenv import load_dotenv
+import logging
 
 # Carregar variáveis de ambiente
 load_dotenv()
 discord_wh = os.getenv('WEBHOOK_DISCORD')
+
+# Configurar logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 # Função para enviar notificações no Discord
 def send_discord(title, description, name):
@@ -39,8 +43,7 @@ def verificar_pagamento(url, headers, payload):
             if data and 'quantidadeOcorrencia' in data:
                 ocorrencias = data['quantidadeOcorrencia']
                 if ocorrencias:
-                    print(f"Pagamento encontrado para o fundo {payload['codigoFundo']}:")
-                    print(json.dumps(ocorrencias, indent=2))
+                    logging.info(f"Pagamento encontrado para o fundo {payload['codigoFundo']}:")
                     
                     # Enviar notificação no Discord
                     if payload['codigoFundo'] == 28:  # ROYALTIES
@@ -49,11 +52,11 @@ def verificar_pagamento(url, headers, payload):
                         send_discord(title_fpm, description_fpm, name_fpm)
 
                     return True
-            print(f"Sem pagamento para o fundo {payload['codigoFundo']}.")
+            logging.info(f"Sem pagamento para o fundo {payload['codigoFundo']}.")
         else:
-            print(f"Erro ao consultar fundo {payload['codigoFundo']}: {response.status_code}")
+            logging.error(f"Erro ao consultar fundo {payload['codigoFundo']}: {response.status_code}")
     except Exception as e:
-        print(f"Erro durante a requisição: {e}")
+        logging.error(f"Erro durante a requisição: {e}")
     return False
 
 # Função principal para fazer requests e verificar pagamentos
@@ -71,8 +74,8 @@ def executar_verificacao():
     # Definindo o intervalo de datas (hoje até 3 dias a frente) no formato DD.MM.YYYY
     hoje = datetime.today().strftime('%d.%m.%Y')
     data_futura = (datetime.today() + timedelta(days=3)).strftime('%d.%m.%Y')
-    print(f'Data Inicial: {hoje}')
-    print(f'Data Futura: {data_futura}')
+    logging.info(f'Data Inicial: {hoje}')
+    logging.info(f'Data Futura: {data_futura}')
     # Definindo os dois payloads
     payloads = [
         {
@@ -91,9 +94,7 @@ def executar_verificacao():
 
     while True:
         for payload in payloads:
-            pagamento_encontrado = verificar_pagamento(url, headers, payload)
-            if pagamento_encontrado:
-                print(f"Pagamento encontrado para fundo {payload['codigoFundo']}!")
+            verificar_pagamento(url, headers, payload)
         
         # Aguardar 2 minutos antes de repetir
         print("Aguardando 2 minutos...")
