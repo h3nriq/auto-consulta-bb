@@ -31,6 +31,9 @@ title_fpm = "Dia de Pagamento"
 description_fpm = "$$ FPM $$"
 name_fpm = "Bot FPM"
 
+# Armazenar a última notificação para cada tipo de pagamento
+ultima_notificacao = {"ROYALTIES": None, "FPM": None}
+
 # Função para verificar pagamentos de um fundo específico
 def verificar_pagamento(url, headers, payload):
     try:
@@ -39,18 +42,30 @@ def verificar_pagamento(url, headers, payload):
         
         if response.status_code == 200:
             data = response.json()
-            # Aqui você deve ajustar a lógica para verificar o retorno correto de pagamento
+            # Verificar o retorno correto de pagamento
             if data and 'quantidadeOcorrencia' in data:
                 ocorrencias = data['quantidadeOcorrencia']
                 if ocorrencias:
-                    logging.info(f"Pagamento encontrado para o fundo {payload['codigoFundo']}:")
+                    tipo_fundo = "ROYALTIES" if payload['codigoFundo'] == 28 else "FPM"
                     
-                    # Enviar notificação no Discord
-                    if payload['codigoFundo'] == 28:  # ROYALTIES
-                        send_discord(title_royalties, description_royalties, name_royalties)
-                    elif payload['codigoFundo'] == 4:  # FPM
-                        send_discord(title_fpm, description_fpm, name_fpm)
+                    # Verificar se já notificou nas últimas 24h
+                    agora = datetime.now()
+                    ultima_vez = ultima_notificacao[tipo_fundo]
+                    
+                    if ultima_vez is None or (agora - ultima_vez) > timedelta(hours=24):
+                        logging.info(f"Pagamento encontrado para o fundo {tipo_fundo}. Enviando notificação.")
+                        
+                        # Enviar notificação no Discord
+                        if payload['codigoFundo'] == 28:  # ROYALTIES
+                            send_discord(title_royalties, description_royalties, name_royalties)
+                        elif payload['codigoFundo'] == 4:  # FPM
+                            send_discord(title_fpm, description_fpm, name_fpm)
 
+                        # Atualizar a última notificação
+                        ultima_notificacao[tipo_fundo] = agora
+                    else:
+                        logging.info(f"Já foi notificado para {tipo_fundo} nas últimas 24 horas.")
+                    
                     return True
             logging.info(f"Sem pagamento para o fundo {payload['codigoFundo']}.")
         else:
@@ -76,6 +91,7 @@ def executar_verificacao():
     data_futura = (datetime.today() + timedelta(days=3)).strftime('%d.%m.%Y')
     logging.info(f'Data Inicial: {hoje}')
     logging.info(f'Data Futura: {data_futura}')
+    
     # Definindo os dois payloads
     payloads = [
         {
@@ -97,7 +113,7 @@ def executar_verificacao():
             verificar_pagamento(url, headers, payload)
         
         # Aguardar 2 minutos antes de repetir
-        print("Aguardando 2 minutos...")
+        logging.info("Aguardando 2 minutos para próxima verificação...")
         time.sleep(120)
 
 # Executar o sistema
