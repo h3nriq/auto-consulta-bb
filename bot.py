@@ -35,7 +35,7 @@ name_fpm = "Bot FPM"
 ultima_notificacao = {"ROYALTIES": None, "FPM": None}
 
 # Função para verificar pagamentos de um fundo específico
-def verificar_pagamento(url, headers, payload):
+def verificar_pagamento(url, headers, payload, hoje, data_futura):
     try:
         # Passar o parâmetro verify=False para desabilitar a verificação SSL
         response = requests.post(url, headers=headers, json=payload, verify=False)
@@ -54,6 +54,8 @@ def verificar_pagamento(url, headers, payload):
                     
                     if ultima_vez is None or (agora - ultima_vez) > timedelta(hours=24):
                         logging.info(f"Pagamento encontrado para o fundo {tipo_fundo}. Enviando notificação.")
+                        logging.info(f'Data Inicial: {hoje}')
+                        logging.info(f'Data Futura: {data_futura}')
                         
                         # Enviar notificação no Discord
                         if payload['codigoFundo'] == 28:  # ROYALTIES
@@ -65,12 +67,20 @@ def verificar_pagamento(url, headers, payload):
                         ultima_notificacao[tipo_fundo] = agora
                     else:
                         logging.info(f"Já foi notificado para {tipo_fundo} nas últimas 24 horas.")
+                        logging.info(f'Data Inicial: {hoje}')
+                        logging.info(f'Data Futura: {data_futura}')
                     
                     return True
             logging.info(f"Sem pagamento para o fundo {payload['codigoFundo']}.")
+            logging.info(f'Data Inicial: {hoje}')
+            logging.info(f'Data Futura: {data_futura}')
         else:
+            logging.info(f'Data Inicial: {hoje}')
+            logging.info(f'Data Futura: {data_futura}')
             logging.error(f"Erro ao consultar fundo {payload['codigoFundo']}: {response.status_code}")
     except Exception as e:
+        logging.info(f'Data Inicial: {hoje}')
+        logging.info(f'Data Futura: {data_futura}')
         logging.error(f"Erro durante a requisição: {e}")
     return False
 
@@ -89,8 +99,6 @@ def executar_verificacao():
     # Definindo o intervalo de datas (hoje até 3 dias a frente) no formato DD.MM.YYYY
     hoje = datetime.today().strftime('%d.%m.%Y')
     data_futura = (datetime.today() + timedelta(days=3)).strftime('%d.%m.%Y')
-    logging.info(f'Data Inicial: {hoje}')
-    logging.info(f'Data Futura: {data_futura}')
     
     # Definindo os dois payloads
     payloads = [
@@ -110,7 +118,7 @@ def executar_verificacao():
 
     while True:
         for payload in payloads:
-            verificar_pagamento(url, headers, payload)
+            verificar_pagamento(url, headers, payload, hoje, data_futura)
         
         # Aguardar 2 minutos antes de repetir
         logging.info("Aguardando 2 minutos para próxima verificação...")
