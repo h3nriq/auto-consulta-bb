@@ -96,27 +96,28 @@ def executar_verificacao():
         'Referer': 'https://demonstrativos.apps.bb.com.br/'
     }
 
-    # Definindo o intervalo de datas (hoje até 3 dias a frente) no formato DD.MM.YYYY
-    hoje = datetime.today().strftime('%d.%m.%Y')
-    data_futura = (datetime.today() + timedelta(days=3)).strftime('%d.%m.%Y')
-    
-    # Definindo os dois payloads
-    payloads = [
-        {
-            "codigoBeneficiario": 4636,
-            "codigoFundo": 28,  # ROYALTIES
-            "dataInicio": hoje,
-            "dataFim": data_futura
-        },
-        {
-            "codigoBeneficiario": 4636,
-            "codigoFundo": 4,   # FPM
-            "dataInicio": hoje,
-            "dataFim": data_futura
-        }
-    ]
-
     while True:
+        # Definindo o intervalo de datas (hoje até 3 dias à frente) no formato DD.MM.YYYY
+        hoje = datetime.today().strftime('%d.%m.%Y')
+        data_futura = (datetime.today() + timedelta(days=3)).strftime('%d.%m.%Y')
+        
+        # Definindo os dois payloads
+        payloads = [
+            {
+                "codigoBeneficiario": 4636,
+                "codigoFundo": 28,  # ROYALTIES
+                "dataInicio": hoje,
+                "dataFim": data_futura
+            },
+            {
+                "codigoBeneficiario": 4636,
+                "codigoFundo": 4,   # FPM
+                "dataInicio": hoje,
+                "dataFim": data_futura
+            }
+        ]
+        
+        # Verificar cada pagamento
         for payload in payloads:
             verificar_pagamento(url, headers, payload, hoje, data_futura)
         
