@@ -63,7 +63,7 @@ def verificar_pagamento(url, headers, payload, hoje, data_futura):
                         elif payload['codigoFundo'] == 4:  # FPM
                             send_discord(title_fpm, description_fpm, name_fpm)
 
-                        # Atualizar a última notificação
+                        # Atualizar a ultima notificação
                         ultima_notificacao[tipo_fundo] = agora
                     else:
                         logging.info(f"Já foi notificado para {tipo_fundo} nas últimas 24 horas.")
