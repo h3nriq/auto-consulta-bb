@@ -6,6 +6,7 @@ from discord_webhook import DiscordWebhook, DiscordEmbed
 import os
 from dotenv import load_dotenv
 import logging
+import re
 
 # Carregar variáveis de ambiente
 load_dotenv()
@@ -24,12 +25,11 @@ def send_discord(title, description, name):
 
 # Títulos e descrições das notificações
 notifications = {"FPM": None, "ROYALTIES": None}
-title_royalties = "Dia de Pagamento"
-description_royalties = "Psiu, psiu, olha o royalties"
-name_royalties = "Bot ANP"
-title_fpm = "Dia de Pagamento"
-description_fpm = "$$ FPM $$"
-name_fpm = "Bot FPM"
+name_bot = "Bot Banco do Brasil"
+title_bot = "Dia de Pagamento"
+
+description_royalties = "Pagamento de ROYALTIES no valor de: R$"
+description_fpm = "Pagamento de FPM no valor de: R$"
 
 # Armazenar a última notificação para cada tipo de pagamento
 ultima_notificacao = {"ROYALTIES": None, "FPM": None}
@@ -56,12 +56,29 @@ def verificar_pagamento(url, headers, payload, hoje, data_futura):
                         logging.info(f"Pagamento encontrado para o fundo {tipo_fundo}. Enviando notificação.")
                         logging.info(f'Data Inicial: {hoje}')
                         logging.info(f'Data Futura: {data_futura}')
-                        
+
+                        # Encontrar o valor recebido
+                        credito_benef = ""  # Inicialize com um valor padrão
+                        for item in data.get('quantidadeOcorrencia', []):
+                            nome_beneficio = item.get('nomeBeneficio', '')
+                            if 'CREDITO BENEF.' in nome_beneficio:
+                                # Extrair o valor numérico seguido por 'C' usando regex
+                                match = re.search(r'(\d{1,3}(?:\.\d{3})*,\d{2}C)', nome_beneficio)
+                                if match:
+                                    credito_benef = match.group(1)
+                                    break  # Saia do loop assim que encontrar
+                        logging.info(f"Valor encontrado de {credito_benef}")
+
                         # Enviar notificação no Discord
                         if payload['codigoFundo'] == 28:  # ROYALTIES
-                            send_discord(title_royalties, description_royalties, name_royalties)
+                            # Coloca o valor do pagamento junto da descrição
+                            description_payment_royalties = f"{description_royalties}{credito_benef}"
+                            send_discord(title_bot, description_payment_royalties, name_bot)
+                        
                         elif payload['codigoFundo'] == 4:  # FPM
-                            send_discord(title_fpm, description_fpm, name_fpm)
+                            # Coloca o valor do pagamento junto da descrição
+                            description_payment_fpm = f"{description_fpm}{credito_benef}"
+                            send_discord(title_bot, description_payment_fpm, name_bot)
 
                         # Atualizar a ultima notificação
                         ultima_notificacao[tipo_fundo] = agora
