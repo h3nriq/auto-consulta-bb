@@ -24,15 +24,16 @@ def send_discord(title, description, name):
     webhook.execute()
 
 # Títulos e descrições das notificações
-notifications = {"FPM": None, "ROYALTIES": None}
+tipos_pagamento = {
+    "FPM": {"ultima_notificacao": None, "credito_benef": None},
+    "ROYALTIES": {"ultima_notificacao": None, "credito_benef": None}
+}
+
 name_bot = "Bot Banco do Brasil"
 title_bot = "Dia de Pagamento"
 
 description_royalties = "Pagamento de ROYALTIES no valor de: R$"
 description_fpm = "Pagamento de FPM no valor de: R$"
-
-# Armazenar a última notificação para cada tipo de pagamento
-ultima_notificacao = {"ROYALTIES": None, "FPM": None}
 
 # Função para verificar pagamentos de um fundo específico
 def verificar_pagamento(url, headers, payload, hoje, data_futura):
@@ -48,26 +49,27 @@ def verificar_pagamento(url, headers, payload, hoje, data_futura):
                 if ocorrencias:
                     tipo_fundo = "ROYALTIES" if payload['codigoFundo'] == 28 else "FPM"
                     
-                    # Verificar se já notificou nas últimas 24h
+                    # Encontrar o valor recebido
+                    credito_benef = ""  # Inicialize com um valor padrão
+                    for item in data.get('quantidadeOcorrencia', []):
+                        nome_beneficio = item.get('nomeBeneficio', '')
+                        if 'CREDITO BENEF.' in nome_beneficio:
+                            # Extrair o valor numérico seguido por 'C' usando regex
+                            match = re.search(r'(\d{1,3}(?:\.\d{3})*,\d{2}C)', nome_beneficio)
+                            if match:
+                                credito_benef = match.group(1)
+                                break  # Saia do loop assim que encontrar
+                    logging.info(f"Valor encontrado de {credito_benef}")
+
+                    # Verificar se já notificou nas últimas 24h ou se o valor mudou
                     agora = datetime.now()
-                    ultima_vez = ultima_notificacao[tipo_fundo]
-                    
-                    if ultima_vez is None or (agora - ultima_vez) > timedelta(hours=24):
+                    ultima_vez = tipos_pagamento[tipo_fundo]["ultima_notificacao"]
+                    ultimo_credito = tipos_pagamento[tipo_fundo]["credito_benef"]
+
+                    if ultima_vez is None or (agora - ultima_vez) > timedelta(hours=24) or credito_benef != ultimo_credito:
                         logging.info(f"Pagamento encontrado para o fundo {tipo_fundo}. Enviando notificação.")
                         logging.info(f'Data Inicial: {hoje}')
                         logging.info(f'Data Futura: {data_futura}')
-
-                        # Encontrar o valor recebido
-                        credito_benef = ""  # Inicialize com um valor padrão
-                        for item in data.get('quantidadeOcorrencia', []):
-                            nome_beneficio = item.get('nomeBeneficio', '')
-                            if 'CREDITO BENEF.' in nome_beneficio:
-                                # Extrair o valor numérico seguido por 'C' usando regex
-                                match = re.search(r'(\d{1,3}(?:\.\d{3})*,\d{2}C)', nome_beneficio)
-                                if match:
-                                    credito_benef = match.group(1)
-                                    break  # Saia do loop assim que encontrar
-                        logging.info(f"Valor encontrado de {credito_benef}")
 
                         # Enviar notificação no Discord
                         if payload['codigoFundo'] == 28:  # ROYALTIES
@@ -80,10 +82,10 @@ def verificar_pagamento(url, headers, payload, hoje, data_futura):
                             description_payment_fpm = f"{description_fpm}{credito_benef}"
                             send_discord(title_bot, description_payment_fpm, name_bot)
 
-                        # Atualizar a ultima notificação
-                        ultima_notificacao[tipo_fundo] = agora
+                        # Atualizar a última notificação
+                        tipos_pagamento[tipo_fundo] = {"ultima_notificacao": agora, "credito_benef": credito_benef}
                     else:
-                        logging.info(f"Já foi notificado para {tipo_fundo} nas últimas 24 horas.")
+                        logging.info(f"Já foi notificado para {tipo_fundo} nas últimas 24 horas e o valor não mudou.")
                         logging.info(f'Data Inicial: {hoje}')
                         logging.info(f'Data Futura: {data_futura}')
                     
