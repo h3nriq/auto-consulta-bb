@@ -8,6 +8,12 @@ from dotenv import load_dotenv
 import logging
 import re
 
+#=========================================================================
+# Título: Bot Banco do Brasil
+# Autor: Henrique Rohamann
+# Ultima Atualização: 19/02/2025
+#=========================================================================
+
 # Carregar variáveis de ambiente
 load_dotenv()
 discord_wh = os.getenv('WEBHOOK_DISCORD')
