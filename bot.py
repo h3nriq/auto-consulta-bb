@@ -11,7 +11,7 @@ import re
 #=========================================================================
 # Título: Bot Banco do Brasil
 # Autor: Henrique Rohamann
-# Ultima Atualização: 19/02/2025
+# Ultima Atualização: 26/05/2025
 #=========================================================================
 
 # Carregar variáveis de ambiente
@@ -129,13 +129,13 @@ def executar_verificacao():
         # Definindo os dois payloads
         payloads = [
             {
-                "codigoBeneficiario": 4636,
+                "codigoBeneficiario": 8218, #TEFÉ AM
                 "codigoFundo": 28,  # ROYALTIES
                 "dataInicio": hoje,
                 "dataFim": data_futura
             },
             {
-                "codigoBeneficiario": 4636,
+                "codigoBeneficiario": 8218, #TEFÉ AM
                 "codigoFundo": 4,   # FPM
                 "dataInicio": hoje,
                 "dataFim": data_futura
