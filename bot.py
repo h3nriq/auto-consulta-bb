@@ -129,13 +129,13 @@ def executar_verificacao():
         # Definindo os dois payloads
         payloads = [
             {
-                "codigoBeneficiario": 8218, #TEFÉ AM
+                "codigoBeneficiario": 362, #ALVARÃES AM
                 "codigoFundo": 28,  # ROYALTIES
                 "dataInicio": hoje,
                 "dataFim": data_futura
             },
             {
-                "codigoBeneficiario": 8218, #TEFÉ AM
+                "codigoBeneficiario": 362, #ALVARÃES AM
                 "codigoFundo": 4,   # FPM
                 "dataInicio": hoje,
                 "dataFim": data_futura
